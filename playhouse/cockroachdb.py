@@ -40,7 +40,7 @@ class UUIDKeyField(UUIDField):
 
     def __init__(self, *args, **kwargs):
         if kwargs.get('constraints'):
-            raise ValueError('%s cannot specify constraints.' % type(self))
+            raise ValueError(f'{type(self)} cannot specify constraints.')
         kwargs['constraints'] = [SQL('DEFAULT gen_random_uuid()')]
         kwargs.setdefault('primary_key', True)
         super(UUIDKeyField, self).__init__(*args, **kwargs)
@@ -51,7 +51,7 @@ class RowIDField(AutoField):
 
     def __init__(self, *args, **kwargs):
         if kwargs.get('constraints'):
-            raise ValueError('%s cannot specify constraints.' % type(self))
+            raise ValueError(f'{type(self)} cannot specify constraints.')
         kwargs['constraints'] = [SQL('DEFAULT unique_rowid()')]
         super(RowIDField, self).__init__(*args, **kwargs)
 
@@ -150,7 +150,7 @@ class CockroachDatabase(PostgresqlDatabase):
             priority = priority.lower()
             if priority not in ('low', 'normal', 'high'):
                 raise ValueError('priority must be low, normal or high')
-            self.cursor().execute('SET TRANSACTION PRIORITY %s' % priority)
+            self.cursor().execute(f'SET TRANSACTION PRIORITY {priority}')
 
     def atomic(self, system_time=None, priority=None):
         if self.is_closed(): self.connect()  # Side-effect, set server version.
@@ -181,9 +181,10 @@ class CockroachDatabase(PostgresqlDatabase):
 
 class _crdb_atomic(_atomic):
     def __enter__(self):
-        if self.db.transaction_depth() > 0:
-            if not isinstance(self.db.top_transaction(), _manual):
-                raise NotImplementedError(TXN_ERR_MSG)
+        if self.db.transaction_depth() > 0 and not isinstance(
+            self.db.top_transaction(), _manual
+        ):
+            raise NotImplementedError(TXN_ERR_MSG)
         return super(_crdb_atomic, self).__enter__()
 
 
